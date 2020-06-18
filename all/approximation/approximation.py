@@ -56,6 +56,7 @@ class Approximation():
             name='approximation',
             scheduler=None,
             target=None,
+            autoscale=None,
             writer=DummyWriter(),
     ):
         self.model = model
@@ -68,6 +69,8 @@ class Approximation():
         self._loss_scaling = loss_scaling
         self._cache = []
         self._clip_grad = clip_grad
+        self._autoscale = autoscale
+        self._autoscale_mean = None
         self._writer = writer
         self._name = name
 
@@ -123,7 +126,7 @@ class Approximation():
         Returns:
             self: The current Approximation object
         '''
-        loss = self._loss_scaling * loss
+        loss = self._scale(loss)
         self._writer.add_loss(self._name, loss.detach())
         loss.backward()
         self.step()
@@ -159,3 +162,13 @@ class Approximation():
         '''
         self._optimizer.zero_grad()
         return self
+
+    def _scale(self, loss):
+        if self._autoscale:
+            target_loss_scaling, beta = self._autoscale
+            if not self._autoscale_mean:
+                self._autoscale_mean = torch.abs(loss.detach())
+            else:
+                self._autoscale_mean = beta * self._autoscale_mean + (1 - beta) * torch.abs(loss.detach())
+            return target_loss_scaling * loss / (self._autoscale_mean + 1e-8)
+        return self._loss_scaling * loss
