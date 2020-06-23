@@ -12,14 +12,14 @@ def a2c(
         # Common settings
         device="cuda",
         discount_factor=0.99,
-        last_frame=40e6,
+        last_frame=200e6,
         # Adam optimizer settings
         lr=7e-4,
         eps=1.5e-4,
         # Other optimization settings
         clip_grad=0.1,
         entropy_loss_scaling=0.01,
-        value_loss_scaling=0.5,
+        value_loss_scaling=0.25,
         # Batch settings
         n_envs=16,
         n_steps=5,
@@ -76,6 +76,7 @@ def a2c(
         policy = SoftmaxPolicy(
             policy_model,
             policy_optimizer,
+            # autoscale=(1, 0.999),
             scheduler=CosineAnnealingLR(
                 policy_optimizer,
                 final_anneal_step,

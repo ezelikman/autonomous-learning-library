@@ -79,7 +79,8 @@ class A2C(Agent):
             # compute losses
             value_loss = mse_loss(values, targets)
             policy_gradient_loss = -(distribution.log_prob(actions) * advantages).mean()
-            entropy_loss = -distribution.entropy().mean()
+            entropy = distribution.entropy()
+            entropy_loss = (1 / entropy).mean()
             policy_loss = policy_gradient_loss + self.entropy_loss_scaling * entropy_loss
 
             # backward pass
@@ -89,7 +90,8 @@ class A2C(Agent):
 
             # debugging
             self.writer.add_loss('policy_gradient', policy_gradient_loss.detach())
-            self.writer.add_loss('entropy', entropy_loss.detach())
+            self.writer.add_loss('entropy', entropy.mean())
+            self.writer.add_loss('v_mean', values.detach().mean())
 
     def _make_buffer(self):
         return NStepAdvantageBuffer(

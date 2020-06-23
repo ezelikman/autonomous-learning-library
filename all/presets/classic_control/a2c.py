@@ -14,7 +14,7 @@ def a2c(
         lr=3e-3,
         # Other optimization settings
         clip_grad=0.1,
-        entropy_loss_scaling=0.001,
+        entropy_loss_scaling=0.,
         # Batch settings
         n_envs=4,
         n_steps=32,
@@ -46,12 +46,14 @@ def a2c(
         v = VNetwork(
             value_model,
             value_optimizer,
+            autoscale=(0.25, 0.9999),
             clip_grad=clip_grad,
             writer=writer
         )
         policy = SoftmaxPolicy(
             policy_model,
             policy_optimizer,
+            autoscale=(1, 0.9999),
             clip_grad=clip_grad,
             writer=writer
         )
