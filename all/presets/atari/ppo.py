@@ -26,7 +26,7 @@ def ppo(
         # Batch settings
         epochs=4,
         minibatches=4,
-        n_envs=8,
+        n_envs=1,
         n_steps=128,
         # GAE settings
         lam=0.95,
