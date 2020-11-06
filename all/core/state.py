@@ -43,7 +43,7 @@ class State(dict):
         if 'done' not in x:
             x['done'] = False
         if 'mask' not in x:
-            x['mask'] = 1. - x['done']
+            x['mask'] = torch.tensor(1. - x['done']).to(device)
         super().__init__(x)
         self._shape = ()
         self.device = device
@@ -256,7 +256,7 @@ class StateArray(State):
         if 'done' not in x:
             x['done'] = torch.tensor([False] * np.prod(shape), device=device).view(shape)
         if 'mask' not in x:
-            x['mask'] = 1. - x['done'].float()
+            x['mask'] = torch.tensor(1. - x['done'].float()).to(device)
         super().__init__(x, device=device)
         self._shape = shape
 
@@ -288,6 +288,8 @@ class StateArray(State):
         return tensor.view((*self.shape, *tensor.shape[1:]))
 
     def apply_mask(self, tensor):
+        if isinstance(self.mask, float):
+            return torch.tensor(tensor * self.mask) # pylint: disable=no-member
         return tensor * self.mask.unsqueeze(-1) # pylint: disable=no-member
 
     def flatten(self):

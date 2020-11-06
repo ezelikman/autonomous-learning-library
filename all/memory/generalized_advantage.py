@@ -67,7 +67,7 @@ class GeneralizedAdvantageBuffer:
         advantages[-1] = current_advantages
         for i in range(self.n_steps):
             t = self.n_steps - 1 - i
-            mask = self._states[t + 1].mask.float()
+            mask = self._states[t + 1].mask if isinstance(self._states[t + 1].mask, float) else self._states[t + 1].mask.float()
             current_advantages = td_errors[t] + self.gamma * self.lam * current_advantages * mask
             advantages[t] = current_advantages
 
