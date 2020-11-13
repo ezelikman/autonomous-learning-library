@@ -81,7 +81,6 @@ class PPO(Agent):
             # compute target values
             features = self.features.no_grad(states)
             pi_0 = self.policy.no_grad(features).log_prob(actions)
-            print(advantages.shape, features.shape, self.v.no_grad(features).shape)
             targets = self.v.no_grad(features) + advantages
 
             # train for several epochs

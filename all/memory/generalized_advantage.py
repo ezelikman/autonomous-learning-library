@@ -56,7 +56,7 @@ class GeneralizedAdvantageBuffer:
         return (
             states[0:-1].flatten(),
             actions,
-            advantages.view(-1)
+            advantages.mean(1)
         )
 
     def _compute_advantages(self, td_errors):
