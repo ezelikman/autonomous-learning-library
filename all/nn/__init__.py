@@ -23,7 +23,7 @@ if use_better_conv:
 
         def forward(self, in_x):
             out = self.conv(in_x)
-            if self.use_stdp:
+            if self.use_stdp and len(in_x) == 1:
                 with torch.no_grad():
                     for i, x in enumerate(in_x):
                         x = x.unsqueeze(0)
