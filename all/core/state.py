@@ -288,9 +288,12 @@ class StateArray(State):
         return tensor.view((*self.shape, *tensor.shape[1:]))
 
     def apply_mask(self, tensor):
+        # print(self.mask.shape, tensor.shape, (tensor * self.mask.unsqueeze(-1)).shape)
         if isinstance(self.mask, float):
             return torch.tensor(tensor * self.mask) # pylint: disable=no-member
-        return tensor * self.mask.unsqueeze(-1) # pylint: disable=no-member
+        if len(tensor.shape) == 2:
+            return tensor * self.mask.unsqueeze(1)
+        return tensor * self.mask.view_as(tensor) # pylint: disable=no-member
 
     def flatten(self):
         """

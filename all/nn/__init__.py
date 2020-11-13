@@ -11,7 +11,7 @@ if use_better_conv:
         return x.mean(-1).mean(-1)
 
     class Conv2d(nn.Module):
-        def __init__(self, *args, gamma=0.99, stdp_update_size=0.00002, use_stdp=True, rescale=False, **kwargs):
+        def __init__(self, *args, gamma=0.9, stdp_update_size=0.00005, use_stdp=True, rescale=False, **kwargs):
             super(Conv2d, self).__init__()
             self.x_history = None
             self.conv = nn.Conv2d(*args, **kwargs)
