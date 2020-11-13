@@ -5,6 +5,50 @@ from torch.nn import functional as F
 import numpy as np
 from all.core import State
 
+use_better_conv = True
+if use_better_conv:
+    def mean_chan(x):
+        return x.mean(-1).mean(-1)
+
+    class Conv2d(nn.Module):
+        def __init__(self, *args, gamma=0.99, stdp_update_size=0.00002, use_stdp=True, rescale=False, **kwargs):
+            super(Conv2d, self).__init__()
+            self.x_history = None
+            self.conv = nn.Conv2d(*args, **kwargs)
+            self.x_history = None
+            self.gamma = gamma
+            self.stdp_update_size = stdp_update_size
+            self.use_stdp = use_stdp
+            self.rescale = rescale
+
+        def forward(self, in_x):
+            out = self.conv(in_x)
+            if self.use_stdp:
+                with torch.no_grad():
+                    for i, x in enumerate(in_x):
+                        x = x.unsqueeze(0)
+                        y = out[i].unsqueeze(0)
+                        if self.x_history is None:
+                            self.x_history, self.y_history = mean_chan(x), mean_chan(y)
+                            continue
+                        # Compare the current input of this layer to the historical outputs
+                        post_syn = (mean_chan(y).view(1, -1, 1) > 0).int() * (self.x_history.view(1, 1, -1) > 0).int()
+                        # And vice versa
+                        pre_syn = (mean_chan(x).view(1, -1, 1) > 0).int() * (self.y_history.view(1, 1, -1) > 0).int() 
+                        
+                        scaled = ((post_syn.float().permute(0,2,1) - pre_syn.float())).sum(0)
+                        scaled = (scaled * torch.sign(mean_chan(self.conv.weight.data).t())).t()
+
+                        self.x_history = self.gamma * self.x_history + (1 - self.gamma) * mean_chan(x)
+                        self.y_history = self.gamma * self.y_history + (1 - self.gamma) * mean_chan(y)
+                        if self.rescale:
+                            prior = torch.abs(self.conv.weight.data).mean()
+                        self.conv.weight.data = self.conv.weight.data * (1 + scaled * self.stdp_update_size)[:, :, None, None]
+                        if self.rescale:
+                            post = torch.abs(self.conv.weight.data).mean()
+                            self.conv.weight.data *= prior / post
+            return out
+
 
 class RLNetwork(nn.Module):
     """
